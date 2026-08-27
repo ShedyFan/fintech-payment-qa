@@ -1,0 +1,6 @@
+.env
+settings.json
+.claude/settings.local.json
+*.log
+node_modules/
+docs/*.pdf.tmp
