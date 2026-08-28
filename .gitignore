@@ -6,3 +6,16 @@ node_modules/
 docs/*.pdf.tmp
 .claude/
 .mcp.json
+
+# Файлы конфигурации, которые песочница Claude Code подменяет /dev/null-заглушками
+# (character special, 0 байт) — не regular files, из-за них падал `git add -A`.
+.bash_profile
+.bashrc
+.profile
+.zprofile
+.zshrc
+.gitconfig
+.gitmodules
+.ripgreprc
+.idea
+.vscode
