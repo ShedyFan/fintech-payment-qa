@@ -4,3 +4,5 @@ settings.json
 *.log
 node_modules/
 docs/*.pdf.tmp
+.claude/
+.mcp.json
