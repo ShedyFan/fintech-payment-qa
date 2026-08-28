@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Платёжный кабинет</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0a0c10;
+    --surface: #12151c;
+    --surface-2: #0e1117;
+    --line: #232834;
+    --line-strong: #2f3644;
+    --ink: #e7eaf0;
+    --muted: #8b93a2;
+    --faint: #5b6270;
+    --accent: #5b8cff;
+    --accent-bright: #86a9ff;
+    --accent-glow: rgba(91, 140, 255, .28);
+    --ok: #3ddc97;
+    --ok-soft: rgba(61, 220, 151, .12);
+    --err: #ff6b6b;
+    --err-soft: rgba(255, 107, 107, .12);
+    --radius: 10px;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink);
+    background: var(--bg);
+    background-image:
+      radial-gradient(900px 400px at 50% -120px, rgba(91, 140, 255, .10), transparent 70%);
+    background-repeat: no-repeat;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 44px 20px 90px; }
+
+  .topline {
+    height: 2px; width: 100%;
+    background: linear-gradient(90deg, transparent, var(--accent), #a06bff, transparent);
+    opacity: .7; margin-bottom: 34px;
+  }
+
+  .brand { display: flex; align-items: center; gap: 11px; margin-bottom: 26px; }
+  .brand .mark {
+    width: 26px; height: 26px; border-radius: 7px; flex: none;
+    background: linear-gradient(140deg, var(--accent), #a06bff);
+    box-shadow: 0 0 18px var(--accent-glow);
+  }
+  .brand .name { font-weight: 600; letter-spacing: -0.01em; }
+  .brand .env {
+    margin-left: auto;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--muted);
+    border: 1px solid var(--line-strong); border-radius: 6px; padding: 3px 9px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin-bottom: 16px;
+  }
+  .card.balance { position: relative; overflow: hidden; }
+  .card.balance::before {
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), #a06bff);
+  }
+  .card h2 {
+    font-family: var(--mono);
+    font-size: 12px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--muted);
+    margin: 0 0 16px;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.11em; color: var(--muted); margin: 0;
+  }
+  .balance-amount {
+    font-family: var(--mono);
+    font-size: 38px; font-weight: 600; letter-spacing: -0.01em;
+    color: var(--ink);
+    margin: 8px 0 16px;
+    font-variant-numeric: tabular-nums;
+  }
+  .limit-pill {
+    display: inline-block;
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 999px; padding: 5px 13px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .row { display: flex; flex-wrap: wrap; gap: 14px; }
+  .field { flex: 1 1 220px; }
+  label {
+    display: block;
+    font-size: 12px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--muted); margin-bottom: 7px;
+  }
+  input[type=text] {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 13px;
+    font: inherit;
+    color: var(--ink);
+    background: var(--surface-2);
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    transition: border-color .12s, box-shadow .12s;
+  }
+  input[type=text]::placeholder { color: var(--faint); }
+  input[type=text]:hover { border-color: #3a4252; }
+  input[type=text]:focus { outline: none; }
+  input[type=text]:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  #amount { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  .breakdown {
+    display: flex; gap: 26px; margin: 18px 0 6px;
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--muted);
+  }
+  .breakdown b {
+    display: block; margin-top: 3px;
+    font-family: var(--mono); font-size: 17px; font-weight: 600;
+    text-transform: none; letter-spacing: 0;
+    color: var(--ink); font-variant-numeric: tabular-nums;
+  }
+
+  button {
+    font: inherit; font-weight: 600;
+    padding: 11px 22px; min-height: 44px;
+    border: 1px solid var(--accent);
+    background: linear-gradient(180deg, var(--accent-bright), var(--accent));
+    color: #0a0c10;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 0 0 0 var(--accent-glow);
+    transition: filter .12s, transform .06s, box-shadow .16s;
+  }
+  button:hover { filter: brightness(1.08); box-shadow: 0 0 22px var(--accent-glow); }
+  button:active { transform: translateY(1px); }
+  button:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-glow); }
+  button.secondary {
+    background: transparent; color: var(--accent-bright);
+    border-color: var(--line-strong); box-shadow: none;
+  }
+  button.secondary:hover {
+    background: rgba(91, 140, 255, .08); border-color: var(--accent); filter: none;
+  }
+  button:disabled { opacity: .45; cursor: not-allowed; transform: none; filter: none; box-shadow: none; }
+
+  .msg { margin-top: 15px; font-size: 14px; min-height: 20px; }
+  .msg.err { color: var(--err); display: flex; align-items: center; gap: 8px; }
+  .msg.err::before {
+    content: "!"; flex: none;
+    width: 17px; height: 17px; border-radius: 50%;
+    background: var(--err-soft); color: var(--err);
+    border: 1px solid var(--err);
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    line-height: 15px; text-align: center;
+  }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 32px;
+    transform: translate(-50%, 12px);
+    background: var(--surface); color: var(--ink);
+    border: 1px solid var(--line-strong);
+    border-left: 3px solid var(--accent);
+    padding: 11px 20px; border-radius: 9px;
+    font-size: 14px; font-weight: 500;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .5);
+    opacity: 0; transition: opacity .18s, transform .18s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 11px 8px; border-bottom: 1px solid var(--line); }
+  th {
+    color: var(--faint); font-weight: 500;
+    font-family: var(--mono); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom-color: var(--line-strong);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr { transition: background .1s; }
+  tbody tr:hover { background: rgba(255, 255, 255, .02); }
+  td.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .status-done { color: var(--ok); font-weight: 500; }
+  .status-cancelled { color: var(--faint); text-decoration: line-through; }
+  td [data-cancel] { margin-left: 8px; }
+
+  .empty {
+    color: var(--muted); text-align: center;
+    font-family: var(--mono); font-size: 13px;
+    padding: 30px 12px; border: 1px dashed var(--line-strong);
+    border-radius: 9px;
+  }
+  .foot {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; margin-top: 15px;
+  }
+  .foot .count {
+    font-family: var(--mono); font-size: 12px; color: var(--faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 520px) {
+    .wrap { padding: 30px 16px 70px; }
+    .balance-amount { font-size: 30px; }
+    .card { padding: 18px 16px; }
+    th:nth-child(1), td:nth-child(1) { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topline" aria-hidden="true"></div>
+
+  <div class="brand">
+    <span class="mark" aria-hidden="true"></span>
+    <span class="name">Платёжный кабинет</span>
+    <span class="env">учебный стенд</span>
+  </div>
+
+  <div class="card balance">
+    <p class="eyebrow">Доступный баланс</p>
+    <p class="balance-amount" id="balance">—</p>
+    <span class="limit-pill" id="limit-line"></span>
+  </div>
+
+  <div class="card">
+    <h2>Новый перевод</h2>
+    <div class="row">
+      <div class="field">
+        <label for="recipient">Получатель</label>
+        <input type="text" id="recipient" autocomplete="off" placeholder="Имя или счёт">
+      </div>
+      <div class="field">
+        <label for="amount">Сумма, ₽</label>
+        <input type="text" id="amount" inputmode="decimal" autocomplete="off" placeholder="0.00">
+      </div>
+    </div>
+    <div class="breakdown">
+      <span>Комиссия<b id="fee">0.00 ₽</b></span>
+      <span>К списанию<b id="total">0.00 ₽</b></span>
+    </div>
+    <button id="send">Перевести</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>История операций</h2>
+    <div id="history"></div>
+    <div class="foot">
+      <span class="count" id="count-line"></span>
+      <button class="secondary" id="reset">Сбросить данные</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "payments-cabinet-v1";
+  var START_BALANCE = 50000;
+  var FEE_RATE = 0.01;
+  var FEE_MIN = 10;
+  var FEE_MAX = 300;
+  var DAILY_LIMIT = 100000;
+  var CANCEL_WINDOW_MS = 60 * 1000;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function defaultState() {
+    return { balance: START_BALANCE, operations: [] };
+  }
+
+  function loadState() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { return defaultState(); }
+    if (!raw) return defaultState();
+    try {
+      var parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed.balance !== "number" || !Array.isArray(parsed.operations)) {
+        return defaultState();
+      }
+      return parsed;
+    } catch (e) {
+      return defaultState();
+    }
+  }
+
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  var state = loadState();
+
+  function money(n) {
+    return n.toFixed(2) + " ₽";
+  }
+
+  // Округление денежной величины до 2 знаков, HALF_UP (BUG-01).
+  function round2(n) {
+    return Math.round((n + Number.EPSILON) * 100) / 100;
+  }
+
+  function todayKey() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function spentToday() {
+    var sum = 0;
+    for (var i = 0; i < state.operations.length; i++) {
+      var op = state.operations[i];
+      if (op.status === "done" && op.day === todayKey()) sum += op.amount;
+    }
+    return sum;
+  }
+
+  function calcFee(amount) {
+    // Процент округляем сразу, до клиппинга: границы 10.00/300.00 уже
+    // двузначные, порядок на них не расходится (BUG-01).
+    var fee = round2(amount * FEE_RATE);
+    if (fee < FEE_MIN) fee = FEE_MIN;
+    if (fee > FEE_MAX) fee = FEE_MAX;
+    return fee;
+  }
+
+  function parseAmount(value) {
+    return parseFloat(String(value).replace(",", "."));
+  }
+
+  function showToast(text) {
+    var t = $("toast");
+    t.textContent = text;
+    t.classList.add("show");
+    setTimeout(function () { t.classList.remove("show"); }, 2200);
+  }
+
+  function setError(text) {
+    var m = $("msg");
+    m.textContent = text || "";
+    m.className = text ? "msg err" : "msg";
+  }
+
+  function renderBalance() {
+    $("balance").textContent = money(state.balance);
+    var left = DAILY_LIMIT - spentToday();
+    $("limit-line").textContent = "Дневной лимит: остаток " + money(left < 0 ? 0 : left) +
+      " из " + money(DAILY_LIMIT);
+  }
+
+  function renderFeePreview() {
+    var amount = parseAmount($("amount").value);
+    if (!isFinite(amount) || amount <= 0) {
+      $("fee").textContent = money(0);
+      $("total").textContent = money(0);
+      return;
+    }
+    var fee = calcFee(amount);
+    $("fee").textContent = money(fee);
+    $("total").textContent = money(amount + fee);
+  }
+
+  function renderHistory() {
+    var box = $("history");
+    if (state.operations.length === 0) {
+      box.innerHTML = '<p class="empty">Операций пока нет.</p>';
+      $("count-line").textContent = "";
+      return;
+    }
+    var lastDoneIndex = -1;
+    for (var i = state.operations.length - 1; i >= 0; i--) {
+      if (state.operations[i].status === "done") { lastDoneIndex = i; break; }
+    }
+
+    var rows = "";
+    for (var j = state.operations.length - 1; j >= 0; j--) {
+      var op = state.operations[j];
+      var time = new Date(op.createdAt);
+      var hh = ("0" + time.getHours()).slice(-2) + ":" + ("0" + time.getMinutes()).slice(-2);
+      var canCancel = op.status === "done" && j === lastDoneIndex &&
+        (Date.now() - op.createdAt) <= CANCEL_WINDOW_MS;
+      var statusCell = op.status === "done"
+        ? '<span class="status-done">Исполнен</span>'
+        : '<span class="status-cancelled">Отменён</span>';
+      if (canCancel) {
+        statusCell += ' <button class="secondary" data-cancel="' + op.id +
+          '" style="padding:3px 10px;font-size:13px">Отменить</button>';
+      }
+      rows += "<tr>" +
+        "<td>" + hh + "</td>" +
+        "<td>" + escapeHtml(op.recipient) + "</td>" +
+        '<td class="num">' + op.amount.toFixed(2) + "</td>" +
+        '<td class="num">' + op.fee.toFixed(2) + "</td>" +
+        "<td>" + statusCell + "</td>" +
+        "</tr>";
+    }
+    box.innerHTML =
+      "<table><thead><tr><th>Время</th><th>Получатель</th><th class='num'>Сумма</th>" +
+      "<th class='num'>Комиссия</th><th>Статус</th></tr></thead><tbody>" +
+      rows + "</tbody></table>";
+    $("count-line").textContent = "Всего операций: " + state.operations.length;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  function render() {
+    renderBalance();
+    renderFeePreview();
+    renderHistory();
+  }
+
+  function doTransfer() {
+    setError("");
+    var recipient = $("recipient").value.trim();
+    var amount = parseAmount($("amount").value);
+
+    if (recipient === "") { setError("Укажите получателя."); return; }
+    if (!isFinite(amount) || amount <= 0) { setError("Сумма должна быть больше нуля."); return; }
+
+    var fee = calcFee(amount);
+    if (amount + fee > state.balance) { setError("Недостаточно средств с учётом комиссии."); return; }
+    if (spentToday() + amount > DAILY_LIMIT) {
+      setError("Превышен дневной лимит переводов.");
+      return;
+    }
+
+    state.balance = round2(state.balance - amount - fee);
+    state.operations.push({
+      id: "op-" + Date.now() + "-" + Math.floor(Math.random() * 1000),
+      recipient: recipient,
+      amount: amount,
+      fee: fee,
+      status: "done",
+      createdAt: Date.now(),
+      day: todayKey()
+    });
+    saveState();
+    $("recipient").value = "";
+    $("amount").value = "";
+    render();
+    showToast("Перевод выполнен");
+  }
+
+  function cancelOperation(id) {
+    for (var i = 0; i < state.operations.length; i++) {
+      var op = state.operations[i];
+      if (op.id === id && op.status === "done") {
+        if (Date.now() - op.createdAt > CANCEL_WINDOW_MS) {
+          setError("Окно отмены истекло.");
+          render();
+          return;
+        }
+        op.status = "cancelled";
+        state.balance = round2(state.balance + op.amount + op.fee);
+        saveState();
+        render();
+        showToast("Операция отменена");
+        return;
+      }
+    }
+  }
+
+  $("send").addEventListener("click", doTransfer);
+  $("amount").addEventListener("input", renderFeePreview);
+  $("recipient").addEventListener("input", function () { setError(""); });
+  $("history").addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-cancel]");
+    if (btn) cancelOperation(btn.getAttribute("data-cancel"));
+  });
+  $("reset").addEventListener("click", function () {
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    state = defaultState();
+    setError("");
+    render();
+    showToast("Данные сброшены");
+  });
+
+  // Обновляем доступность кнопки «Отменить» по таймеру.
+  setInterval(renderHistory, 1000);
+
+  render();
+})();
+</script>
+</body>
+</html>

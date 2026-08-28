@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Платёжный кабинет</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --card: #ffffff;
+    --ink: #1b1b1b;
+    --muted: #6b6b6b;
+    --line: #e2ddd2;
+    --accent: #b5502f;
+    --ok: #2f7d4f;
+    --err: #b3261e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 15px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+  }
+  .balance-amount { font-size: 30px; font-weight: 600; margin: 4px 0 0; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  input[type=text] {
+    width: 100%;
+    padding: 9px 11px;
+    font: inherit;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: #fff;
+  }
+  input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .field { flex: 1 1 220px; }
+  .fee-line { margin: 12px 0 4px; color: var(--muted); font-size: 14px; }
+  .fee-line b { color: var(--ink); }
+  button {
+    font: inherit;
+    padding: 9px 16px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #fff;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  button.secondary { background: #fff; color: var(--accent); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .msg { margin-top: 12px; font-size: 14px; min-height: 20px; }
+  .msg.err { color: var(--err); }
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+    background: var(--ok); color: #fff; padding: 10px 18px; border-radius: 8px;
+    font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 500; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .status-done { color: var(--ok); }
+  .status-cancelled { color: var(--muted); text-decoration: line-through; }
+  .empty { color: var(--muted); padding: 12px 6px; }
+  .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+  @media (max-width: 520px) {
+    .balance-amount { font-size: 24px; }
+    th:nth-child(4), td:nth-child(4) { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Платёжный кабинет</h1>
+  <p class="sub">Учебный стенд. Данные хранятся только в этом браузере.</p>
+
+  <div class="card">
+    <label>Доступный баланс</label>
+    <p class="balance-amount" id="balance">—</p>
+    <p class="fee-line" id="limit-line"></p>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size:16px;margin:0 0 14px">Новый перевод</h2>
+    <div class="row">
+      <div class="field">
+        <label for="recipient">Получатель</label>
+        <input type="text" id="recipient" autocomplete="off" placeholder="Имя или счёт">
+      </div>
+      <div class="field">
+        <label for="amount">Сумма, ₽</label>
+        <input type="text" id="amount" inputmode="decimal" autocomplete="off" placeholder="0.00">
+      </div>
+    </div>
+    <p class="fee-line">Комиссия: <b id="fee">0.00 ₽</b> · К списанию: <b id="total">0.00 ₽</b></p>
+    <button id="send">Перевести</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size:16px;margin:0 0 14px">История операций</h2>
+    <div id="history"></div>
+    <div class="foot">
+      <span class="fee-line" id="count-line"></span>
+      <button class="secondary" id="reset">Сбросить данные</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "payments-cabinet-v1";
+  var START_BALANCE = 50000;
+  var FEE_RATE = 0.01;
+  var FEE_MIN = 10;
+  var FEE_MAX = 300;
+  var DAILY_LIMIT = 100000;
+  var CANCEL_WINDOW_MS = 60 * 1000;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function defaultState() {
+    return { balance: START_BALANCE, operations: [] };
+  }
+
+  function loadState() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { return defaultState(); }
+    if (!raw) return defaultState();
+    try {
+      var parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed.balance !== "number" || !Array.isArray(parsed.operations)) {
+        return defaultState();
+      }
+      return parsed;
+    } catch (e) {
+      return defaultState();
+    }
+  }
+
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  var state = loadState();
+
+  function money(n) {
+    return n.toFixed(2) + " ₽";
+  }
+
+  function todayKey() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function spentToday() {
+    var sum = 0;
+    for (var i = 0; i < state.operations.length; i++) {
+      var op = state.operations[i];
+      if (op.status === "done" && op.day === todayKey()) sum += op.amount;
+    }
+    return sum;
+  }
+
+  function calcFee(amount) {
+    var fee = amount * FEE_RATE;
+    if (fee < FEE_MIN) fee = FEE_MIN;
+    if (fee > FEE_MAX) fee = FEE_MAX;
+    return fee;
+  }
+
+  function parseAmount(value) {
+    return parseFloat(String(value).replace(",", "."));
+  }
+
+  function showToast(text) {
+    var t = $("toast");
+    t.textContent = text;
+    t.classList.add("show");
+    setTimeout(function () { t.classList.remove("show"); }, 2200);
+  }
+
+  function setError(text) {
+    var m = $("msg");
+    m.textContent = text || "";
+    m.className = text ? "msg err" : "msg";
+  }
+
+  function renderBalance() {
+    $("balance").textContent = money(state.balance);
+    var left = DAILY_LIMIT - spentToday();
+    $("limit-line").textContent = "Дневной лимит: остаток " + money(left < 0 ? 0 : left) +
+      " из " + money(DAILY_LIMIT);
+  }
+
+  function renderFeePreview() {
+    var amount = parseAmount($("amount").value);
+    if (!isFinite(amount) || amount <= 0) {
+      $("fee").textContent = money(0);
+      $("total").textContent = money(0);
+      return;
+    }
+    var fee = calcFee(amount);
+    $("fee").textContent = money(fee);
+    $("total").textContent = money(amount + fee);
+  }
+
+  function renderHistory() {
+    var box = $("history");
+    if (state.operations.length === 0) {
+      box.innerHTML = '<p class="empty">Операций пока нет.</p>';
+      $("count-line").textContent = "";
+      return;
+    }
+    var lastDoneIndex = -1;
+    for (var i = state.operations.length - 1; i >= 0; i--) {
+      if (state.operations[i].status === "done") { lastDoneIndex = i; break; }
+    }
+
+    var rows = "";
+    for (var j = state.operations.length - 1; j >= 0; j--) {
+      var op = state.operations[j];
+      var time = new Date(op.createdAt);
+      var hh = ("0" + time.getHours()).slice(-2) + ":" + ("0" + time.getMinutes()).slice(-2);
+      var canCancel = op.status === "done" && j === lastDoneIndex &&
+        (Date.now() - op.createdAt) <= CANCEL_WINDOW_MS;
+      var statusCell = op.status === "done"
+        ? '<span class="status-done">Исполнен</span>'
+        : '<span class="status-cancelled">Отменён</span>';
+      if (canCancel) {
+        statusCell += ' <button class="secondary" data-cancel="' + op.id +
+          '" style="padding:3px 10px;font-size:13px">Отменить</button>';
+      }
+      rows += "<tr>" +
+        "<td>" + hh + "</td>" +
+        "<td>" + escapeHtml(op.recipient) + "</td>" +
+        '<td class="num">' + op.amount.toFixed(2) + "</td>" +
+        '<td class="num">' + op.fee.toFixed(2) + "</td>" +
+        "<td>" + statusCell + "</td>" +
+        "</tr>";
+    }
+    box.innerHTML =
+      "<table><thead><tr><th>Время</th><th>Получатель</th><th class='num'>Сумма</th>" +
+      "<th class='num'>Комиссия</th><th>Статус</th></tr></thead><tbody>" +
+      rows + "</tbody></table>";
+    $("count-line").textContent = "Всего операций: " + state.operations.length;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  function render() {
+    renderBalance();
+    renderFeePreview();
+    renderHistory();
+  }
+
+  function doTransfer() {
+    setError("");
+    var recipient = $("recipient").value.trim();
+    var amount = parseAmount($("amount").value);
+
+    if (recipient === "") { setError("Укажите получателя."); return; }
+    if (!isFinite(amount) || amount <= 0) { setError("Сумма должна быть больше нуля."); return; }
+
+    var fee = calcFee(amount);
+    if (amount + fee > state.balance) { setError("Недостаточно средств с учётом комиссии."); return; }
+    if (spentToday() + amount > DAILY_LIMIT) {
+      setError("Превышен дневной лимит переводов.");
+      return;
+    }
+
+    state.balance = state.balance - amount - fee;
+    state.operations.push({
+      id: "op-" + Date.now() + "-" + Math.floor(Math.random() * 1000),
+      recipient: recipient,
+      amount: amount,
+      fee: fee,
+      status: "done",
+      createdAt: Date.now(),
+      day: todayKey()
+    });
+    saveState();
+    $("recipient").value = "";
+    $("amount").value = "";
+    render();
+    showToast("Перевод выполнен");
+  }
+
+  function cancelOperation(id) {
+    for (var i = 0; i < state.operations.length; i++) {
+      var op = state.operations[i];
+      if (op.id === id && op.status === "done") {
+        if (Date.now() - op.createdAt > CANCEL_WINDOW_MS) {
+          setError("Окно отмены истекло.");
+          render();
+          return;
+        }
+        op.status = "cancelled";
+        state.balance = state.balance + op.amount + op.fee;
+        saveState();
+        render();
+        showToast("Операция отменена");
+        return;
+      }
+    }
+  }
+
+  $("send").addEventListener("click", doTransfer);
+  $("amount").addEventListener("input", renderFeePreview);
+  $("recipient").addEventListener("input", function () { setError(""); });
+  $("history").addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-cancel]");
+    if (btn) cancelOperation(btn.getAttribute("data-cancel"));
+  });
+  $("reset").addEventListener("click", function () {
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    state = defaultState();
+    setError("");
+    render();
+    showToast("Данные сброшены");
+  });
+
+  // Обновляем доступность кнопки «Отменить» по таймеру.
+  setInterval(renderHistory, 1000);
+
+  render();
+})();
+</script>
+</body>
+</html>
