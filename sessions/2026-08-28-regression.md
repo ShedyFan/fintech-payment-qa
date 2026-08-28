@@ -2,7 +2,7 @@
 
 - **Дата:** 2026-08-28
 - **Ассистент:** Claude Code, модель Sonnet 5 (claude-sonnet-5)
-- **Режим разрешений:** `ВОПРОС: указать какой и почему`
+- **Режим разрешений:** Auto (обычный, sandbox включён). Восстановлено: точную настройку на момент сессии автор не фиксировал; согласуется с `2026-08-28-fix-bug-01.md` / `2026-08-28-independent-audit.md` и с `permissionMode: auto` в логах Claude Code.
 - **Статус:** завершена
 - **Workflow:** `workflows/qa-regression-workflow.md`
 - **Объект:** `test-plan.md` после сведения `test-areas/app.md` в Область 4;
