@@ -3,6 +3,11 @@ settings.json
 .claude/settings.local.json
 *.log
 node_modules/
+# Playwright: артефакты прогонов и служебное — в репозиторий не идут
+test-results/
+playwright-report/
+blob-report/
+.last-run.json
 docs/*.pdf.tmp
 .claude/
 .mcp.json

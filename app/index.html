@@ -296,14 +296,34 @@
     return { balance: START_BALANCE, operations: [] };
   }
 
+  // Форма одной операции (BUG-04). Любое несоответствие -> запись считается
+  // повреждённой.
+  function isValidOperation(op) {
+    return op !== null && typeof op === "object" &&
+      typeof op.id === "string" &&
+      typeof op.recipient === "string" &&
+      typeof op.amount === "number" && isFinite(op.amount) &&
+      typeof op.fee === "number" && isFinite(op.fee) &&
+      (op.status === "done" || op.status === "cancelled") &&
+      typeof op.createdAt === "number" && isFinite(op.createdAt) &&
+      typeof op.day === "string";
+  }
+
   function loadState() {
     var raw = null;
     try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { return defaultState(); }
     if (!raw) return defaultState();
     try {
       var parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed.balance !== "number" || !Array.isArray(parsed.operations)) {
+      if (!parsed || typeof parsed.balance !== "number" || !isFinite(parsed.balance) ||
+          !Array.isArray(parsed.operations)) {
         return defaultState();
+      }
+      // Одна повреждённая запись -> откат ВСЕГО состояния (BUG-04): balance
+      // хранится отдельно и не пересчитывается из operations, частичная
+      // фильтрация дала бы ложное чувство целостности денежного следа.
+      for (var i = 0; i < parsed.operations.length; i++) {
+        if (!isValidOperation(parsed.operations[i])) return defaultState();
       }
       return parsed;
     } catch (e) {
@@ -326,8 +346,13 @@
     return Math.round((n + Number.EPSILON) * 100) / 100;
   }
 
+  // Ключ суток дневного лимита — по МЕСТНОМУ времени устройства, не UTC (BUG-02).
+  // Формат YYYY-MM-DD сохранён — совместим с уже записанными operations[].day.
   function todayKey() {
-    return new Date().toISOString().slice(0, 10);
+    var d = new Date();
+    var m = ("0" + (d.getMonth() + 1)).slice(-2);
+    var day = ("0" + d.getDate()).slice(-2);
+    return d.getFullYear() + "-" + m + "-" + day;
   }
 
   function spentToday() {
@@ -348,8 +373,14 @@
     return fee;
   }
 
+  // Строгая валидация всей строки: целое, опционально с одной точкой ИЛИ запятой
+  // и 1–2 знаками после (BUG-03). Всё прочее — NaN, а не молчаливое усечение
+  // префикса, как делал parseFloat ("1 000" -> 1, "100abc" -> 100).
+  var AMOUNT_RE = /^-?\d+([.,]\d{1,2})?$/;
   function parseAmount(value) {
-    return parseFloat(String(value).replace(",", "."));
+    var s = String(value).trim();
+    if (!AMOUNT_RE.test(s)) return NaN;
+    return parseFloat(s.replace(",", "."));
   }
 
   function showToast(text) {
@@ -393,12 +424,14 @@
     }
     var lastDoneIndex = -1;
     for (var i = state.operations.length - 1; i >= 0; i--) {
-      if (state.operations[i].status === "done") { lastDoneIndex = i; break; }
+      if (isValidOperation(state.operations[i]) &&
+          state.operations[i].status === "done") { lastDoneIndex = i; break; }
     }
 
     var rows = "";
     for (var j = state.operations.length - 1; j >= 0; j--) {
       var op = state.operations[j];
+      if (!isValidOperation(op)) continue;   // второй барьер (BUG-04)
       var time = new Date(op.createdAt);
       var hh = ("0" + time.getHours()).slice(-2) + ":" + ("0" + time.getMinutes()).slice(-2);
       var canCancel = op.status === "done" && j === lastDoneIndex &&
@@ -440,9 +473,14 @@
   function doTransfer() {
     setError("");
     var recipient = $("recipient").value.trim();
-    var amount = parseAmount($("amount").value);
+    var rawAmount = $("amount").value.trim();
+    var amount = parseAmount(rawAmount);
 
     if (recipient === "") { setError("Укажите получателя."); return; }
+    if (rawAmount !== "" && !AMOUNT_RE.test(rawAmount)) {
+      setError("Сумма указана в неверном формате. Введите число без пробелов и " +
+        "разделителей разрядов, например 1000 или 1000.50."); return;
+    }
     if (!isFinite(amount) || amount <= 0) { setError("Сумма должна быть больше нуля."); return; }
 
     var fee = calcFee(amount);

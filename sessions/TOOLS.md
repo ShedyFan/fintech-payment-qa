@@ -281,3 +281,21 @@
   сама причина расхождения между окружениями по-прежнему не выяснена до
   конца, но факт, что хук технически работает хотя бы где-то, теперь
   подтверждён напрямую, а не только пайп-тестом.
+
+## 2026-08-29 · Playwright (`@playwright/test`) — установлен в репозиторий
+
+- **Тип:** библиотека (dev-зависимость) + браузер.
+- **Установка:** `npm i -D @playwright/test` (v1.62.1) + `npx playwright install
+  chromium` (Chrome Headless Shell 151.0.7922.34, ~114 МБ, в
+  `~/AppData/Local/ms-playwright/`). Node 24.19.0 / npm 11.17.0 — из доустановки
+  2026-08-29 (запись выше). `package.json` + `package-lock.json` в репозитории,
+  `node_modules/` и `test-results/` — в `.gitignore`.
+- **Зачем:** закрыть остаточный риск — прогнать `tests/payments.spec.js` в
+  настоящем Playwright, а не только браузерным агентом. Спека была написана
+  заранее так, чтобы позеленеть после фиксов BUG-03/04.
+- **Проверка:** `npx playwright test tests/payments.spec.js` → **6 passed
+  (4.1s)**. `APP-009`/`APP-014` из красных стали зелёными. Вывод —
+  `tests/README.md`, `sessions/2026-08-29-fix-bug-02-03-04.md`.
+- **Оговорка:** `npm init -y` при инициализации затащил в `package.json`
+  кракозябренный кусок README (CP1251-чтение UTF-8) — `package.json` затем
+  переписан вручную начисто (name/description/scripts.test/devDependencies).

@@ -68,3 +68,41 @@ APP-012 покрывает только синтаксически битый JS
 В `loadState()` проверять форму каждого элемента `operations` (наличие и типы
 `amount`, `fee`, `status`, `recipient`, `createdAt`, `day`); при несоответствии —
 `defaultState()`. Отдельная сессия «фикс», как для BUG-01.
+
+## Исправлено
+
+- **Сессия:** `sessions/2026-08-29-fix-bug-02-03-04.md`.
+- **Архитектурное решение:** полная отбраковка состояния целиком при первой же
+  невалидной записи, **не** построчная фильтрация. `balance` в этом продукте
+  хранится отдельно и не пересчитывается из `operations` — частичная фильтрация
+  дала бы ложное чувство целостности денежного следа и ослабила бы `spentToday()`
+  как бизнес-инвариант; `SPEC.md` описывает контракт как двоичный сброс.
+  Поле `id` включено в обязательную схему (используется в `cancelOperation`).
+
+Изменения в `app/index.html`:
+
+```js
+// новая функция
+function isValidOperation(op) {
+  return op !== null && typeof op === "object" &&
+    typeof op.id === "string" && typeof op.recipient === "string" &&
+    typeof op.amount === "number" && isFinite(op.amount) &&
+    typeof op.fee === "number" && isFinite(op.fee) &&
+    (op.status === "done" || op.status === "cancelled") &&
+    typeof op.createdAt === "number" && isFinite(op.createdAt) &&
+    typeof op.day === "string";
+}
+
+// loadState(): плюс isFinite(parsed.balance) и цикл по operations —
+// один невалидный элемент => return defaultState().
+// renderHistory(): барьер вторым слоем — if (!isValidOperation(op)) continue;
+// (и такой же guard в цикле поиска lastDoneIndex).
+```
+
+Заодно закрыт смежный дефект того же класса: `typeof NaN === "number"` проходил
+исходную проверку баланса — добавлена `isFinite(parsed.balance)`.
+
+**Проверка:** `tests/payments.spec.js` → `APP-014 [BUG-04]` теперь **PASS**
+(`{"balance":0,"operations":[{}]}` → экран показывает начальное состояние,
+`#history .empty` виден, баланс `50000.00 ₽`, `pageerror` пуст). Полный прогон
+6/6 PASS — `sessions/2026-08-29-fix-bug-02-03-04.md`.
