@@ -6,7 +6,7 @@
   классификатор блокировал действие для агента).
 - **Режим разрешений:** обычные подтверждения. В ходе работы сработал **auto-mode
   классификатор** Claude Code — блокировал правки глобального
-  `C:\Users\1\.claude\settings.json` и `claude plugin details/install` для агента;
+  `C:\Users\<user>\.claude\settings.json` и `claude plugin details/install` для агента;
   те же действия автор выполнял сам.
 - **Статус:** завершена
 
@@ -33,7 +33,7 @@
 
 ### 1. Автор подключил rtk-хук и claude-mem вручную
 
-Правку глобального `C:\Users\1\.claude\settings.json` — блок `hooks` для `rtk`
+Правку глобального `C:\Users\<user>\.claude\settings.json` — блок `hooks` для `rtk`
 (`PreToolUse: Bash`) и `"enabledPlugins": {"claude-mem@thedotmack": true}` —
 автор внёс сам, в отдельном интерактивном терминале. Классификатор блокирует
 такое изменение для агента, но не для человека.
@@ -44,7 +44,7 @@
 enabled`, но MCP `mcp-search` падал с `CONNECTION_CLOSED`.
 
 **Диагностика первопричины:** прочитан `.mcp.json` плагина
-(`C:\Users\1\.claude\plugins\cache\thedotmack\claude-mem\13.17.0\.mcp.json`).
+(`C:\Users\<user>\.claude\plugins\cache\thedotmack\claude-mem\13.17.0\.mcp.json`).
 Сервер `mcp-search` запускается командой **`node`** (инлайн-скрипт ищет и спавнит
 `scripts/mcp-server.cjs` через `process.execPath`), а не `bun`, как
 предполагалось по общему описанию репозитория при первичной проверке («worker
@@ -59,7 +59,7 @@ service на Bun» — это отдельный компонент, не сам
 | **uv 0.12.7** | `astral.sh/uv/install.ps1` (редирект на `releases.astral.sh`) | тоже прочитан `WebFetch` перед запуском |
 | **Node.js 24.19.0 LTS / npm 11.17.0** | `winget install OpenJS.NodeJS.LTS --silent` | тот же канал, которым в системе стоит Claude Code CLI; winget сам сверяет хэш инсталлятора |
 
-Установлены в `C:\Users\1\.bun\bin\bun.exe`, `C:\Users\1\.local\bin\uv.exe`,
+Установлены в `C:\Users\<user>\.bun\bin\bun.exe`, `C:\Users\<user>\.local\bin\uv.exe`,
 `C:\Program Files\nodejs\`. Все подтверждены по полному пути
 (`--version`).
 
@@ -70,7 +70,7 @@ PATH, записанный `winget` в реестр, не подхватывае
 перезапущен их родитель (Explorer / уже запущенное приложение терминала).
 Открытие нового окна внутри того же работающего приложения не помогает.
 Обходной путь без перезагрузки:
-`$env:Path += ";C:\Program Files\nodejs;C:\Users\1\.bun\bin;C:\Users\1\.local\bin"`
+`$env:Path += ";C:\Program Files\nodejs;C:\Users\<user>\.bun\bin;C:\Users\<user>\.local\bin"`
 перед запуском `claude` в той же PowerShell-сессии.
 
 ### 5. Баг в JSON-команде хука rtk (ошибка агента при первой правке, найдена и исправлена)
@@ -82,7 +82,7 @@ PATH, записанный `winget` в реестр, не подхватывае
 символом как escape и съедает его (`\U`→`U`, `\1`→`1`, `\.`→`.`). Путь
 превращался в мусор `C:Users1.localbinrtk.exe`, ошибка `command not found` в
 каждом `PreToolUse:Bash`. **Фикс:** прямые слэши —
-`"C:/Users/1/.local/bin/rtk.exe hook claude"` (Windows принимает, bash не
+`"C:/Users/<user>/.local/bin/rtk.exe hook claude"` (Windows принимает, bash не
 трогает). После правки пайп-тест снова проходит с корректным путём.
 
 ### 6. Живая проверка — автором, в отдельной сессии
@@ -112,7 +112,7 @@ PATH, записанный `winget` в реестр, не подхватывае
 ## Изменения в проекте
 
 Внутри репозитория — **ничего**: вся правка в глобальном окружении
-(`C:\Users\1\.claude\settings.json`, `C:\Users\1\.claude\CLAUDE.md`, новые
+(`C:\Users\<user>\.claude\settings.json`, `C:\Users\<user>\.claude\CLAUDE.md`, новые
 бинарники вне проекта). В самом репозитории эта работа отражена только в
 `REPORT.md` § 7, `sessions/STATE.md` и `sessions/TOOLS.md` (коммиты `30f1c1d`,
 `0ddb0dc`). Этот файл добавлен позже — журнальная запись под уже сделанную

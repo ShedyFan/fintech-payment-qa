@@ -4,7 +4,8 @@
   "private": true,
   "description": "QA-обвязка учебного платёжного кабинета: Playwright-автотест против app/index.html.",
   "scripts": {
-    "test": "playwright test tests/payments.spec.js"
+    "test": "playwright test tests/payments.spec.js",
+    "test:slow": "playwright test tests/payments.slow.spec.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1"

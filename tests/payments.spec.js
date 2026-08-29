@@ -32,18 +32,22 @@ async function transfer(page, recipient, amount) {
 }
 
 // Подставить состояние в localStorage и перезагрузить (seed для граничных
-// сценариев). Если у операции day === 'TODAY', подставляется локальный ключ
-// суток — так же, как его строит todayKey() в app/ (по времени браузера).
+// сценариев). Если у операции day === 'TODAY', подставляется ключ суток по
+// деловому поясу МСК (UTC+3) — так же, как его строит todayKey() в app/.
+const LIMIT_TZ_OFFSET_MIN = 180; // должно совпадать с app/index.html
+function mskTodayKey() {
+  const d = new Date(Date.now() + LIMIT_TZ_OFFSET_MIN * 60000);
+  return d.getUTCFullYear() + '-' +
+    ('0' + (d.getUTCMonth() + 1)).slice(-2) + '-' +
+    ('0' + d.getUTCDate()).slice(-2);
+}
 async function seedAndReload(page, state) {
   await page.goto(URL);
-  await page.evaluate((s) => {
-    const d = new Date();
-    const today = d.getFullYear() + '-' +
-      ('0' + (d.getMonth() + 1)).slice(-2) + '-' +
-      ('0' + d.getDate()).slice(-2);
+  const today = mskTodayKey();
+  await page.evaluate(({ s, today }) => {
     (s.operations || []).forEach((op) => { if (op.day === 'TODAY') op.day = today; });
     localStorage.setItem('payments-cabinet-v1', JSON.stringify(s));
-  }, state);
+  }, { s: state, today });
   await page.reload();
 }
 

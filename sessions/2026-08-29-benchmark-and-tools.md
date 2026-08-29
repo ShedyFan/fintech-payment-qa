@@ -185,8 +185,8 @@ wall 253 с < сумма 393 с, что *согласуется* с паралл
   `Read`/`WebFetch`, только Bash-вывод).
 - **Что сделано:** скачан `rtk-x86_64-pc-windows-msvc.zip` v0.46.0 с GitHub
   Releases, sha256 сверен с официальным `checksums.txt` (совпал), распакован в
-  `C:\Users\1\.local\bin\rtk.exe`. `rtk.exe --version` → `rtk 0.46.0`. `rtk.exe
-  init -g` создал `C:\Users\1\.claude\RTK.md` и добавил ссылку `@RTK.md` в
+  `C:\Users\<user>\.local\bin\rtk.exe`. `rtk.exe --version` → `rtk 0.46.0`. `rtk.exe
+  init -g` создал `C:\Users\<user>\.claude\RTK.md` и добавил ссылку `@RTK.md` в
   глобальный `CLAUDE.md`; в неинтерактивном режиме **не** тронул
   `settings.json` сам (`(non-interactive mode, defaulting to N)`), а вывел
   точный JSON-фрагмент хука для ручного/явного добавления.
@@ -194,7 +194,7 @@ wall 253 с < сумма 393 с, что *согласуется* с паралл
   файл): `echo '{"tool_name":"Bash","tool_input":{"command":"ls"}}' | rtk.exe
   hook claude` → `{"hookSpecificOutput":{...,"updatedInput":{"command":"rtk
   ls"}}}`, exit 0 — механизм переписывания команд работает.
-- **Заблокировано:** добавление хука в `C:\Users\1\.claude\settings.json`
+- **Заблокировано:** добавление хука в `C:\Users\<user>\.claude\settings.json`
   (глобальный файл, действует на **все** будущие проекты и сессии) отклонено
   **auto-mode классификатором** Claude Code — самим механизмом безопасности
   инструмента, а не по моей инициативе. Дальнейшие прямые вызовы `rtk.exe`
@@ -222,7 +222,7 @@ wall 253 с < сумма 393 с, что *согласуется* с паралл
   предположительно попытался бы их поставить сам.
 - **Что сделано:** `claude plugin marketplace add thedotmack/claude-mem` —
   выполнено успешно, marketplace `thedotmack` зарегистрирован в
-  `C:\Users\1\.claude\settings.json`.
+  `C:\Users\<user>\.claude\settings.json`.
 - **Заблокировано:** `claude plugin details claude-mem` (просмотр состава
   плагина и оценки стоимости токенов **перед** установкой — как раз шаг
   security-check по методичке курса) отклонён тем же auto-mode
@@ -250,10 +250,10 @@ wall 253 с < сумма 393 с, что *согласуется* с паралл
 - Файлы `test-areas/*.md`, `test-plan.md`, `SPEC.md`, `app/index.html` — **не
   изменялись** ни при замере, ни при исследовании инструментов (только
   читались).
-- Вне репозитория: `C:\Users\1\.local\bin\rtk.exe` (новый файл на диске,
-  не в проекте), `C:\Users\1\.claude\RTK.md` (создан `rtk init -g`),
-  `C:\Users\1\.claude\CLAUDE.md` (добавлена ссылка `@RTK.md`),
-  `C:\Users\1\.claude\settings.json` (добавлен marketplace `thedotmack` —
+- Вне репозитория: `C:\Users\<user>\.local\bin\rtk.exe` (новый файл на диске,
+  не в проекте), `C:\Users\<user>\.claude\RTK.md` (создан `rtk init -g`),
+  `C:\Users\<user>\.claude\CLAUDE.md` (добавлена ссылка `@RTK.md`),
+  `C:\Users\<user>\.claude\settings.json` (добавлен marketplace `thedotmack` —
   это единственная правка глобального `settings.json`, которая **прошла**;
   правка с хуком `rtk` заблокирована и не применена).
 

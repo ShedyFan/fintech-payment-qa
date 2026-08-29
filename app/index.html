@@ -346,13 +346,17 @@
     return Math.round((n + Number.EPSILON) * 100) / 100;
   }
 
-  // Ключ суток дневного лимита — по МЕСТНОМУ времени устройства, не UTC (BUG-02).
-  // Формат YYYY-MM-DD сохранён — совместим с уже записанными operations[].day.
+  // Ключ суток дневного лимита — по фиксированному деловому поясу МСК (UTC+3,
+  // без перехода на летнее время), а НЕ по часам устройства и НЕ по UTC
+  // (BUG-02; решение пересмотрено 2026-08-29). Лимит — бизнес-правило, оно
+  // должно обнуляться в одну и ту же местную полночь для всех пользователей,
+  // независимо от часового пояса их устройства. Формат YYYY-MM-DD не изменился.
+  var LIMIT_TZ_OFFSET_MIN = 180; // Europe/Moscow, UTC+3
   function todayKey() {
-    var d = new Date();
-    var m = ("0" + (d.getMonth() + 1)).slice(-2);
-    var day = ("0" + d.getDate()).slice(-2);
-    return d.getFullYear() + "-" + m + "-" + day;
+    var d = new Date(Date.now() + LIMIT_TZ_OFFSET_MIN * 60000);
+    var m = ("0" + (d.getUTCMonth() + 1)).slice(-2);
+    var day = ("0" + d.getUTCDate()).slice(-2);
+    return d.getUTCFullYear() + "-" + m + "-" + day;
   }
 
   function spentToday() {

@@ -144,9 +144,9 @@
 - **Тип:** CLI-прокси (single-binary), сжимает вывод bash-команд перед
   попаданием в контекст модели.
 - **Установка:** `rtk-x86_64-pc-windows-msvc.zip` v0.46.0 с GitHub Releases →
-  `C:\Users\1\.local\bin\rtk.exe`; sha256 сверен с официальным
+  `C:\Users\<user>\.local\bin\rtk.exe`; sha256 сверен с официальным
   `checksums.txt` перед распаковкой (совпал). `rtk init -g` создал
-  `C:\Users\1\.claude\RTK.md`, добавил `@RTK.md` в глобальный `CLAUDE.md`.
+  `C:\Users\<user>\.claude\RTK.md`, добавил `@RTK.md` в глобальный `CLAUDE.md`.
 - **Зачем:** опциональный пункт задания — попробовать оптимизатор контекста,
   сравнить эффект на реальном вопросе к репозиторию.
 - **Проверка:** `rtk.exe --version` → `0.46.0`; пайп-тест хука
@@ -154,7 +154,7 @@
   claude`) → корректно переписал `ls` в `rtk ls`, exit 0. Дальше механизм не
   проверялся в реальной работе — см. «Тупик».
 - **Тупик:** активация хука требует правки глобального
-  `C:\Users\1\.claude\settings.json` (действует на все будущие проекты) —
+  `C:\Users\<user>\.claude\settings.json` (действует на все будущие проекты) —
   **отклонено auto-mode классификатором** Claude Code как потенциально
   рискованное системное изменение; дальнейшие прямые вызовы `rtk.exe` тоже
   начали блокироваться. Это защитный механизм самого инструмента, не ошибка
@@ -190,7 +190,7 @@
 
 ## 2026-08-29 · rtk и claude-mem — доустановлены руками автора + недостающие рантаймы
 
-- **Что сделал автор:** правку глобального `C:\Users\1\.claude\settings.json`
+- **Что сделал автор:** правку глобального `C:\Users\<user>\.claude\settings.json`
   (хук `rtk` + `"enabledPlugins": {"claude-mem@thedotmack": true}`) внёс сам, в
   отдельном интерактивном терминале — это было заблокировано auto-mode
   классификатором для агента (см. запись выше), но не для человека.
@@ -206,7 +206,7 @@
   сервер `mcp-search` не поднимался (`CONNECTION_CLOSED` в системном
   уведомлении сессии).
 - **Диагностика первопричины:** прочитан `.mcp.json` плагина
-  (`C:\Users\1\.claude\plugins\cache\thedotmack\claude-mem\13.17.0\.mcp.json`)
+  (`C:\Users\<user>\.claude\plugins\cache\thedotmack\claude-mem\13.17.0\.mcp.json`)
   — сервер `mcp-search` запускается командой `node` (инлайн-скрипт ищет и
   спавнит `scripts/mcp-server.cjs` через `process.execPath`), а не `bun`, как
   предполагалось изначально по описанию репозитория («worker service на
@@ -218,10 +218,10 @@
     содержимое скрипта проверено `WebFetch` перед запуском (скачивает бинарник
     с `github.com/oven-sh/bun/releases`, пишет в `~/.bun/bin`, PATH через
     реестр — без подозрительного). Установлен в
-    `C:\Users\1\.bun\bin\bun.exe`.
+    `C:\Users\<user>\.bun\bin\bun.exe`.
   - **uv 0.12.7** — официальный установщик `astral.sh/uv/install.ps1`
     (редиректит на `releases.astral.sh`), тоже проверен `WebFetch` перед
-    запуском. Установлен в `C:\Users\1\.local\bin\uv.exe`.
+    запуском. Установлен в `C:\Users\<user>\.local\bin\uv.exe`.
   - **Node.js 24.19.0 LTS / npm 11.17.0** — `winget install
     OpenJS.NodeJS.LTS --silent` (тот же канал, которым в системе уже стоит
     Claude Code CLI; вингет сам проверяет хэш инсталлятора). Установлен в
@@ -237,7 +237,7 @@
   не подхватывается новыми процессами, пока не перезапущен их родитель
   (Explorer/уже запущенное приложение терминала); открытие нового окна внутри
   того же работающего приложения не помогает. Обходной путь без перезагрузки:
-  `$env:Path += ";C:\Program Files\nodejs;C:\Users\1\.bun\bin;C:\Users\1\.local\bin"`
+  `$env:Path += ";C:\Program Files\nodejs;C:\Users\<user>\.bun\bin;C:\Users\<user>\.local\bin"`
   перед запуском `claude` в той же PowerShell-сессии. После этого `/mcp`
   показал: `plugin:claude-mem:mcp-search · ✓ connected · 14 tools`, и сама
   сессия уже пишет содержательные наблюдения (видно в её ответах). **MCP
@@ -250,7 +250,7 @@
   перед не-специальным символом как escape и съедает его (`\U`→`U`, `\1`→`1`,
   `\.`→`.`). Итог — путь превращался в мусор `C:Users1.localbinrtk.exe`,
   ошибка `command not found` в каждом `PreToolUse:Bash`. **Фикс:** прямые
-  слэши — `"C:/Users/1/.local/bin/rtk.exe hook claude"` (Windows их принимает
+  слэши — `"C:/Users/<user>/.local/bin/rtk.exe hook claude"` (Windows их принимает
   нормально, bash не трогает). После правки пайп-тест снова проходит с
   корректным путём.
 - **Измеренный эффект (после фикса пути):** `rtk gain` в реальной сессии —

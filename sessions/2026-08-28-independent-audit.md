@@ -9,7 +9,7 @@
 
 > запускай независимый аудит репозитория
 
-(перед этим, в том же диалоге: `D:\Типо рабочий стол\ИИ claude\ДЗ 2\fintech-payment-qa перейди сюда`)
+(перед этим, в том же диалоге: `<путь к репозиторию>\fintech-payment-qa перейди сюда` — локальный путь обезличен 2026-08-29 по просьбе автора)
 
 ## Размышления
 
@@ -137,7 +137,7 @@ APP-009 [BUG-03] действительно красный (проверено �
 
 ### AUDIT-08 — низкая — `docs/build-pdf.py` непереносим
 
-Хардкод: `STAGE = r"C:\Users\Tester_QA\AppData\Local\Temp\qabuild"`,
+Хардкод: `STAGE = r"C:\Users\<user>\AppData\Local\Temp\qabuild"`,
 `CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"`,
 `AUTHOR = "Кирилл Никифоров"`. Критерий «`python docs/build-pdf.py` пересобирает
 оба PDF без ошибок» выполним только на конкретной машине с Chrome по этому пути.

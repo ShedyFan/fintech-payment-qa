@@ -520,9 +520,10 @@ session-файле.
   ort), stash.
 - **Playwright** (`@playwright/test` 1.62.1, Node 24.19, Chromium 151):
   `tests/payments.spec.js` против запущенного `app/`. Установлен в репозиторий
-  2026-08-29 (`package.json`); прогон — 9/9 PASS (6 базовых/регрессионных +
-  seed-тесты APP-008/011/012), вывод в `tests/README.md` и
-  `sessions/2026-08-29-fix-bug-02-03-04.md`.
+  2026-08-29 (`package.json`); `tests/payments.spec.js` — 9/9 PASS (6 базовых/
+  регрессионных + seed-тесты APP-008/011/012); `tests/payments.slow.spec.js` —
+  APP-011 вживую с реальным ожиданием 63 сек, 1/1 PASS (`npm run test:slow`).
+  Вывод — `tests/README.md`, `sessions/2026-08-29-fix-bug-02-03-04.md`.
 - **Кросс-аудит — три независимые модели** (слайд 26): чистая сессия
   `claude-sonnet-5` (`sessions/2026-08-28-independent-audit.md`), субагент на
   Claude Opus и сторонняя Qwen (по публичному репо) — оба в
