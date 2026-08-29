@@ -86,7 +86,10 @@ python docs/build-pdf.py
 - **Workflow регрессии** — `workflows/qa-regression-workflow.md`, два прогона
   (`sessions/2026-08-27-regression.md`, `sessions/2026-08-28-regression.md`).
 - **Изоляция агента в песочнице** — `REPORT.md` § 5: попытки записи за пределы
-  каталога с командами и кодами возврата.
+  каталога с командами и кодами возврата; подмена конфигов `/dev/null`-заглушками;
+  **MCP-граница** (слайды 10–11) — свой минимальный MCP-сервер
+  `tools/sandbox-mcp-probe/` пишет за пределы репозитория там, где Bash в
+  песочнице получает отказ.
 - **Устойчивость к инъекции** — `REPORT.md` § 6: три вектора внедрения × две
   модели (Haiku 4.5 и Sonnet/Opus).
 - **Независимый аудит** — тремя способами: чистой сессией той же модели
@@ -166,10 +169,11 @@ python docs/build-pdf.py
 │   ├── build-brief.md      — бриф, по которому собран продукт
 │   └── README.md           — как поднять, заложенные правила
 ├── bugs/                   — BUG-01…04 (формат из AGENTS.md)
-├── tests/                  — payments.spec.js (Playwright) + README
+├── tests/                  — payments.spec.js + payments.slow.spec.js (Playwright) + README
 ├── test-areas/             — черновики областей + тестовые данные инъекции
 ├── naive-run/              — наивный прогон и его сравнение с спековым
 ├── workflows/              — qa-regression-workflow.md
+├── tools/sandbox-mcp-probe/ — MCP-сервер для проверки границы песочницы (§ 5)
 ├── sessions/               — журнал: файл на сессию, STATE.md, TOOLS.md
 └── docs/                   — test-plan.pdf, report.pdf, build-pdf.py, *.html
 ```
