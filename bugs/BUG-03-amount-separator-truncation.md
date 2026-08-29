@@ -102,4 +102,4 @@ function parseAmount(value) {
 
 **Проверка:** `tests/payments.spec.js` → `APP-009 [BUG-03]` теперь **PASS**
 (`1 000` отклонён, операция не создана, поле ошибки не пустое). Полный прогон
-6/6 PASS — `sessions/2026-08-29-fix-bug-02-03-04.md`.
+9/9 PASS — `sessions/2026-08-29-fix-bug-02-03-04.md`.

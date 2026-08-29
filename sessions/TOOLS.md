@@ -293,8 +293,9 @@
 - **Зачем:** закрыть остаточный риск — прогнать `tests/payments.spec.js` в
   настоящем Playwright, а не только браузерным агентом. Спека была написана
   заранее так, чтобы позеленеть после фиксов BUG-03/04.
-- **Проверка:** `npx playwright test tests/payments.spec.js` → **6 passed
-  (4.1s)**. `APP-009`/`APP-014` из красных стали зелёными. Вывод —
+- **Проверка:** `npx playwright test tests/payments.spec.js` → сначала
+  **6 passed**, затем после добавления seed-тестов APP-008/011/012 —
+  **9 passed (6.7s)**. `APP-009`/`APP-014` из красных стали зелёными. Вывод —
   `tests/README.md`, `sessions/2026-08-29-fix-bug-02-03-04.md`.
 - **Оговорка:** `npm init -y` при инициализации затащил в `package.json`
   кракозябренный кусок README (CP1251-чтение UTF-8) — `package.json` затем

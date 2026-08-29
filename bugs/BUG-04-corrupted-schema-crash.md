@@ -104,5 +104,6 @@ function isValidOperation(op) {
 
 **Проверка:** `tests/payments.spec.js` → `APP-014 [BUG-04]` теперь **PASS**
 (`{"balance":0,"operations":[{}]}` → экран показывает начальное состояние,
-`#history .empty` виден, баланс `50000.00 ₽`, `pageerror` пуст). Полный прогон
-6/6 PASS — `sessions/2026-08-29-fix-bug-02-03-04.md`.
+`#history .empty` виден, баланс `50000.00 ₽`, `pageerror` пуст). Добавлен и
+`APP-012` (синтаксически битый JSON `{ broken json` → тот же сброс). Полный
+прогон 9/9 PASS — `sessions/2026-08-29-fix-bug-02-03-04.md`.
