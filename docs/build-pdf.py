@@ -26,21 +26,36 @@ STAGE = os.path.join(tempfile.gettempdir(), "qabuild")
 
 def _find_chrome():
     """Первый существующий Chromium-бинарь: Chrome, затем Edge (оба умеют
-    --headless --print-to-pdf). Можно переопределить переменной CHROME_BIN."""
+    --headless --print-to-pdf). Windows / macOS / Linux. Можно переопределить
+    переменной окружения CHROME_BIN."""
     env = os.environ.get("CHROME_BIN")
     if env and os.path.isfile(env):
         return env
     local = os.environ.get("LOCALAPPDATA", "")
     candidates = [
+        # Windows
         r"C:\Program Files\Google\Chrome\Application\chrome.exe",
         r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
         os.path.join(local, r"Google\Chrome\Application\chrome.exe"),
         r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
         r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+        # macOS
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "/Applications/Chromium.app/Contents/MacOS/Chromium",
+        "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+        # Linux
+        "/usr/bin/google-chrome",
+        "/usr/bin/chromium",
+        "/usr/bin/chromium-browser",
     ]
     for p in candidates:
         if p and os.path.isfile(p):
             return p
+    # последняя попытка — что-нибудь из PATH
+    for name in ("google-chrome", "chromium", "chromium-browser", "chrome"):
+        found = shutil.which(name)
+        if found:
+            return found
     return candidates[0]  # для сообщения об ошибке в main()
 
 

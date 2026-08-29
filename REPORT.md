@@ -522,8 +522,12 @@ session-файле.
   `tests/payments.spec.js` против запущенного `app/`. Установлен в репозиторий
   2026-08-29 (`package.json`); прогон — 6/6 PASS, вывод в `tests/README.md` и
   `sessions/2026-08-29-fix-bug-02-03-04.md`.
-- **Кросс-аудит другой моделью:** субагент на Claude Opus (2026-08-29,
-  `sessions/2026-08-29-course-compliance-audit.md`). Codex/Fable недоступны.
+- **Кросс-аудит — три независимые модели** (слайд 26): чистая сессия
+  `claude-sonnet-5` (`sessions/2026-08-28-independent-audit.md`), субагент на
+  Claude Opus и сторонняя Qwen (по публичному репо) — оба в
+  `sessions/2026-08-29-course-compliance-audit.md`. Codex недоступен. Все три
+  подтвердили закрытость обязательных пунктов и отсутствие секретов; найденные
+  рассинхроны устранены.
 - **Оптимизатор контекста / память:** `rtk`, `claude-mem` — см. § 7 и
   `sessions/TOOLS.md`.
 - **Сборка PDF:** `docs/build-pdf.py` — Markdown из `test-plan.md` / `REPORT.md`
